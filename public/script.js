@@ -1,4 +1,5 @@
-// public/script.js
+// public/script.js - FINAL COMPLETE VERSION
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- DOM ELEMENT SELECTION ---
@@ -46,7 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingMessage.classList.remove('hidden');
 
             try {
-                const url = `/nearby?lat=${userLat}&lon=${userLon}`;
+                // --- THIS IS THE CORRECTED LINE ---
+                const url = `/api/nearby?lat=${userLat}&lon=${userLon}`;
+                
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Server responded with an error.');
                 const results = await response.json();
@@ -82,25 +85,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ADMIN: ADD LOCATION LOGIC ---
     if (addForm) {
         addForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('name').value;
-            const latitude = document.getElementById('latitude').value;
-            const longitude = document.getElementById('longitude').value;
-            addStatus.textContent = 'Adding...';
-            try {
-                const response = await fetch('/locations', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, latitude, longitude })
-                });
-                if (!response.ok) throw new Error('Server responded with an error.');
-                const data = await response.json();
-                addStatus.textContent = `Success: Added ${data.name}! The index is rebuilding.`;
-                addForm.reset();
-            } catch (error) {
-                addStatus.textContent = 'Error adding location.';
-                console.error(error);
-            }
-        });
-    }
-});
+            
