@@ -1,14 +1,11 @@
 const express = require('express');
-const db = require('./db');
+const db = require('../db');
 const KDBush = require('kdbush');
 const geokdbush = require('geokdbush'); // <-- Import geokdbush
-const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
 // --- IN-MEMORY CACHE & INDEX ---
 let locationsFromDB = [];
 let locationIndex; // This will still be a KDBush index
@@ -77,7 +74,5 @@ app.get('/nearby', (req, res) => {
 
 // --- STARTUP LOGIC ---
 buildIndex().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
+    module.exports = app;
 });
