@@ -1,0 +1,54 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proximity API Tester</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; color: #333; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #1a1a1a; }
+        .form-section { margin-bottom: 30px; border-bottom: 1px solid #ddd; padding-bottom: 20px; }
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input { padding: 10px; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem; }
+        button { padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #results { margin-top: 20px; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #f9f9f9; padding: 10px; border-radius: 4px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Proximity API Tester</h1>
+
+        <div class="form-section">
+            <h2>1. Add a New Location</h2>
+            <form id="add-location-form">
+                <input type="text" id="name" placeholder="Location Name (e.g., 'Eiffel Tower')" required>
+                <input type="number" step="any" id="latitude" placeholder="Latitude (e.g., 48.8584)" required>
+                <input type="number" step="any" id="longitude" placeholder="Longitude (e.g., 2.2945)" required>
+                <button type="submit">Add Location</button>
+            </form>
+            <p id="add-status"></p>
+        </div>
+
+        <div class="form-section">
+            <h2>2. Find Nearby Locations</h2>
+            <form id="find-nearby-form">
+                <input type="number" step="any" id="user-lat" placeholder="Your Latitude" required>
+                <input type="number" step="any" id="user-lon" placeholder="Your Longitude" required>
+                <button type="submit">Find Nearby</button>
+            </form>
+            <div id="results">
+                <h3>Results:</h3>
+                <ul id="results-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
