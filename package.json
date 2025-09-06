@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
-    "geokdbush": "^2.0.1",
+    "geokdbush": "^1.1.0",
     "kdbush": "^3.0.0",
     "pg": "^8.11.3"
   }
