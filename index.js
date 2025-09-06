@@ -1,15 +1,17 @@
-const path = require('path');
 const express = require('express');
 const db = require('./db');
-const KDBush = require('kdbush'); // <-- Import the library
+const KDBush = require('kdbush');
+const geokdbush = require('geokdbush'); // <-- Import geokdbush
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
 // --- IN-MEMORY CACHE & INDEX ---
 let locationsFromDB = [];
-let locationIndex;
+let locationIndex; // This will still be a KDBush index
 
 // --- HELPER FUNCTION ---
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -25,17 +27,13 @@ async function buildIndex() {
     try {
         console.log("Fetching locations from DB to build index...");
         const { rows } = await db.query('SELECT id, name, latitude, longitude FROM locations');
-        
-        // Important: Convert latitude/longitude from string to number
         locationsFromDB = rows.map(r => ({
             id: r.id,
             name: r.name,
             latitude: parseFloat(r.latitude),
             longitude: parseFloat(r.longitude)
         }));
-
         console.log(`Building index for ${locationsFromDB.length} locations...`);
-        // The index needs to know how to get x (longitude) and y (latitude) from each point
         locationIndex = new KDBush(locationsFromDB, (p) => p.longitude, (p) => p.latitude);
         console.log("Index built successfully.");
     } catch (error) {
@@ -45,21 +43,13 @@ async function buildIndex() {
 
 // --- API ENDPOINTS ---
 
-// Endpoint to add a new location
 app.post('/locations', async (req, res) => {
+    // ... (This endpoint remains the same)
     const { name, latitude, longitude } = req.body;
-    if (!name || latitude === undefined || longitude === undefined) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
+    if (!name || latitude === undefined || longitude === undefined) { return res.status(400).json({ error: 'Missing required fields' }); }
     try {
-        const result = await db.query(
-            'INSERT INTO locations(name, latitude, longitude) VALUES($1, $2, $3) RETURNING *',
-            [name, latitude, longitude]
-        );
-        
-        // VERY IMPORTANT: Re-build the index after adding a new location!
-        buildIndex(); 
-        
+        const result = await db.query('INSERT INTO locations(name, latitude, longitude) VALUES($1, $2, $3) RETURNING *', [name, latitude, longitude]);
+        buildIndex();
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error(error);
@@ -67,38 +57,25 @@ app.post('/locations', async (req, res) => {
     }
 });
 
-// Endpoint to find nearby locations (the FAST way)
 app.get('/nearby', (req, res) => {
     const { lat, lon, limit = 5 } = req.query;
     const userLat = parseFloat(lat);
     const userLon = parseFloat(lon);
+    if (isNaN(userLat) || isNaN(userLon)) { return res.status(400).json({ error: 'Invalid lat/lon parameters' }); }
+    if (!locationIndex) { return res.status(503).json({ error: "Index is not ready." }); }
 
-    if (isNaN(userLat) || isNaN(userLon)) {
-        return res.status(400).json({ error: 'Invalid lat/lon parameters' });
-    }
+    // THIS IS THE CORRECTED PART
+    // Use geokdbush.around to query the index
+    const nearestPoints = geokdbush.around(locationIndex, userLon, userLat, parseInt(limit));
 
-    // Check if the index is ready
-    if (!locationIndex) {
-        return res.status(503).json({ error: "Index is not ready. Please try again in a moment." });
-    }
-
-    // 1. Use the index to find the N nearest points INSTANTLY
-    const nearestPointIndexes = locationIndex.around(userLon, userLat, parseInt(limit));
-
-    // 2. Get the full location data and calculate exact distance
-    const results = nearestPointIndexes.map(i => {
-        const point = locationsFromDB[i];
+    const results = nearestPoints.map(point => {
         const distance = getDistance(userLat, userLon, point.latitude, point.longitude);
-        return {
-            ...point,
-            distance: `${distance.toFixed(2)} km`
-        };
+        return { ...point, distance: `${distance.toFixed(2)} km` };
     });
-
     res.json(results);
 });
 
-// Build the index for the first time when the server starts
+// --- STARTUP LOGIC ---
 buildIndex().then(() => {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
