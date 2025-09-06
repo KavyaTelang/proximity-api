@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db');
+const db = require('./db');
 const KDBush = require('kdbush');
 const geokdbush = require('geokdbush'); // <-- Import geokdbush
 const app = express();
@@ -74,5 +74,7 @@ app.get('/nearby', (req, res) => {
 
 // --- STARTUP LOGIC ---
 buildIndex().then(() => {
-    module.exports = app;
+    app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
 });
