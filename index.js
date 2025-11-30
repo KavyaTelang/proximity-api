@@ -24,6 +24,24 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.asin(Math.sqrt(a));
 }
 
+// --- HELPER FUNCTION TO REMOVE DUPLICATES ---
+async function removeDuplicates() {
+    try {
+        console.log("Removing duplicate locations...");
+        await db.query(`
+            DELETE FROM locations
+            WHERE id NOT IN (
+                SELECT MIN(id)
+                FROM locations
+                GROUP BY name, latitude, longitude
+            )
+        `);
+        console.log("Duplicates removed successfully.");
+    } catch (error) {
+        console.error("Failed to remove duplicates:", error);
+    }
+}
+
 // --- FUNCTION TO BUILD THE INDEX ---
 async function buildIndex() {
     try {
@@ -66,7 +84,7 @@ app.get('/nearby', (req, res) => {
     if (isNaN(userLat) || isNaN(userLon)) { return res.status(400).json({ error: 'Invalid lat/lon parameters' }); }
     if (!locationIndex) { return res.status(503).json({ error: "Index is not ready." }); }
 
-    // THIS IS THE CORRECTED PART
+    
     // Use geokdbush.around to query the index
     const nearestPoints = geokdbush.around(locationIndex, userLon, userLat, parseInt(limit));
 
@@ -78,8 +96,10 @@ app.get('/nearby', (req, res) => {
 });
 
 // --- STARTUP LOGIC ---
-buildIndex().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+removeDuplicates().then(() => {
+    buildIndex().then(() => {
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
     });
 });
