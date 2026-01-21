@@ -2,7 +2,7 @@
 
 Proximity is a high-performance Geo-Spatial API built with Node.js that finds the nearest points of interest to a given location.
 
-**Live API URL:** [https://proximity-locater.vercel.app/]
+**Live API URL:** https://proximity-locater.vercel.app/
 
 ## Core Features
 
